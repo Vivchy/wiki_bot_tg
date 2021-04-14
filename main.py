@@ -12,11 +12,13 @@ bot = telebot.TeleBot(token)
 @bot.message_handler(commands=['start'])
 def command_help(message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    roll = types.KeyboardButton('случайная статья wiki 🌐')
+    btn = types.KeyboardButton('случайная статья wiki 🌐')
+    btn2 = types.KeyboardButton('случайная цитата')
+    keyboard.add(btn, btn2)
 
-    keyboard.add(roll)
-
-    bot.send_message(message.chat.id, 'Нажатие на кнопку присылает случайную статью. Ввод текста поиск совпадений в wiki', reply_markup=keyboard)
+    bot.send_message(message.chat.id,
+                     'Нажатие на кнопку присылает случайную статью. Ввод текста поиск совпадений в wiki',
+                     reply_markup=keyboard)
 
 
 def get_page(url, params=None):
@@ -51,16 +53,24 @@ def get_search_page(word):
     return the_page
 
 
+def random_quote():
+    url = 'https://quote-citation.com/random'
+    quote_page = get_page(url)
+    soup = BeautifulSoup(quote_page.text, 'lxml')
+    text = soup.find('div', class_='quote-text').find('p').get_text().strip()
+    author = soup.find('p', class_='source').get_text().strip()
+    return text, author
+
+
 @bot.message_handler(func=lambda message: True)
 def echo_message(message):
     if message.text == 'случайная статья wiki 🌐':
         link = get_random_wiki_page()
         bot.send_message(message.chat.id, link)
-    elif message.text == 'lurk':
-        url = 'http://lurkmore.to'
-        page = get_page(url)
-        the_page = page.url
-        bot.send_message(message.chat.id, the_page)
+    elif message.text == 'случайная цитата':
+        text, author = random_quote()
+        bot.send_message(message.chat.id, f'{text}\n {author}')
+
     else:
         word = message.text
         link = get_search_page(word)
